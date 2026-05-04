@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+.python-version
+
+# Environment
+.env
+.env.local
+
+# Data — never commit raw filings or chunks
+data/filings/
+data/chunks/
+data/chroma/
+*.parquet
+
+# But DO commit the golden eval dataset
+!data/eval/
+!data/eval/**
+
+# Experiments output (large)
+experiments/**/results.jsonl
+experiments/**/traces/
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Test/coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# OS
+Thumbs.db
