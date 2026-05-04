@@ -21,7 +21,7 @@ def test_ticker_sectors_balanced() -> None:
 def test_years_in_range() -> None:
     """Years should be reasonable; SEC filings before ~2000 have inconsistent format."""
     assert all(y >= 2000 for y in YEARS)
-    assert len(YEARS) == 3
+    assert len(YEARS) == 4
 
 
 def test_settings_paths_resolvable() -> None:
