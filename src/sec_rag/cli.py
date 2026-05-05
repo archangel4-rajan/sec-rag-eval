@@ -1,11 +1,11 @@
 """CLI entrypoint. Subcommands grow over the project.
 
-    sec-rag ingest download   # Day 1
-    sec-rag ingest parse      # Day 2 (stub for now)
-    sec-rag ingest chunk      # Day 2
-    sec-rag ingest embed      # Day 3
-    sec-rag query "..."       # Day 4
-    sec-rag eval run          # Day 7
+sec-rag ingest download   # Day 1
+sec-rag ingest parse      # Day 2
+sec-rag ingest chunk      # Day 2 (next)
+sec-rag ingest embed      # Day 3
+sec-rag query "..."       # Day 4
+sec-rag eval run          # Day 7
 """
 
 from __future__ import annotations
@@ -32,15 +32,16 @@ def ingest_download() -> None:
 
 @ingest_app.command("parse")
 def ingest_parse() -> None:
-    """Parse Item 1A and Item 7 from raw filings. (Day 2.)"""
-    typer.echo("Not implemented yet — coming Day 2.")
-    raise typer.Exit(code=1)
+    """Extract Item 1A and Item 7 sections from raw filings."""
+    from sec_rag.ingest.parse import parse_all
+
+    parse_all()
 
 
 @ingest_app.command("chunk")
 def ingest_chunk() -> None:
-    """Split parsed sections into embedding-ready chunks. (Day 2.)"""
-    typer.echo("Not implemented yet — coming Day 2.")
+    """Split parsed sections into embedding-ready chunks. (Day 2 next.)"""
+    typer.echo("Not implemented yet — coming next.")
     raise typer.Exit(code=1)
 
 
