@@ -28,6 +28,11 @@ Design principles
 This approach is format-agnostic — it works on Apple's bold-styled headings,
 Amazon's table-layout headings, and Wells Fargo's split-document filings without
 code changes per filer.
+
+Known limitation: filings that don't use the literal string "Item 1A" as a
+section anchor (e.g., Citigroup uses standalone "1A." in cross-reference
+indexes plus all-caps topic headings like "RISK FACTORS") fall outside this
+parser's scope. See KNOWN_ISSUES.md for details.
 """
 
 from __future__ import annotations
@@ -47,18 +52,13 @@ from sec_rag.logging_setup import get_logger
 logger = get_logger(__name__)
 
 # Sections we extract: (start_id, primary_end_id, fallback_end_id, friendly_name)
-# Item 1A normally ends at Item 1B; falls back to Item 2 (Properties) when 1B is
-# absent (smaller filers sometimes omit "Unresolved Staff Comments").
-# Item 7 normally ends at Item 7A; falls back to Item 8 when 7A is absent.
+# friendly_name is documentary — kept for clarity at the call site, not consumed.
 TARGET_SECTIONS = [
     ("1A", "1B", "2", "Risk Factors"),
     ("7", "7A", "8", "Management's Discussion and Analysis"),
 ]
 
 # Document TYPEs whose content is part of the 10-K body.
-# - 10-K: the primary submission document
-# - EX-13: Annual Report to Shareholders (used by banks like WFC for the body)
-# - EX-99: catch-all "additional exhibits" used by some filers for body content
 BODY_DOCUMENT_TYPES = ("10-K", "EX-13", "EX-99")
 
 # Match "Item N" or "Item NA" in plain text.
@@ -67,9 +67,7 @@ ITEM_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
-# Phrases indicating a cross-reference rather than a section heading. Checked
-# in a window AROUND each candidate (before + token + after) so phrases like
-# "See Item 1A of Part I" are detected as a unit.
+# Phrases indicating a cross-reference rather than a section heading.
 CROSS_REF_PHRASES = [
     "see item ",
     "in item ",
@@ -92,8 +90,35 @@ CROSS_REF_PHRASES = [
     "this annual report",
 ]
 
+# Plausible section length, in characters of plain text.
+# Item 1A: typically 30K-150K chars. Item 7: 20K-100K for tech/consumer
+# companies but 200K-350K for banks. Cap at 400K.
 MIN_SECTION_CHARS = 5_000
-MAX_SECTION_CHARS = 250_000
+MAX_SECTION_CHARS = 400_000
+
+# SEC-mandated standard titles for each Item number. These are the canonical
+# titles every 10-K uses (with minor stylistic variations). We use these both
+# as fallbacks when title extraction fails AND as priority anchors when a
+# filing's text contains a recognizable variant.
+STANDARD_TITLES = {
+    "1": "Business",
+    "1A": "Risk Factors",
+    "1B": "Unresolved Staff Comments",
+    "1C": "Cybersecurity",
+    "2": "Properties",
+    "3": "Legal Proceedings",
+    "4": "Mine Safety Disclosures",
+    "5": "Market for Registrant's Common Equity, Related Stockholder Matters and Issuer Purchases of Equity Securities",
+    "6": "Selected Financial Data",
+    "7": "Management's Discussion and Analysis of Financial Condition and Results of Operations",
+    "7A": "Quantitative and Qualitative Disclosures About Market Risk",
+    "8": "Financial Statements and Supplementary Data",
+    "9": "Changes in and Disagreements with Accountants on Accounting and Financial Disclosure",
+    "9A": "Controls and Procedures",
+    "9B": "Other Information",
+    "10": "Directors, Executive Officers and Corporate Governance",
+    "11": "Executive Compensation",
+}
 
 
 @dataclass
@@ -140,7 +165,6 @@ def parse_filing(filing_path: Path) -> tuple[ParseResult, list[ParsedSection]]:
 
     raw = filing_path.read_text(encoding="utf-8", errors="replace")
 
-    # Step 1: Concatenate every <DOCUMENT> block whose TYPE indicates body content.
     body_html, body_doc_count = _extract_body_documents(raw)
     if not body_html:
         return (
@@ -154,7 +178,6 @@ def parse_filing(filing_path: Path) -> tuple[ParseResult, list[ParsedSection]]:
             [],
         )
 
-    # Step 2: Strip HTML to plain text.
     plain = _html_to_text(body_html)
     if len(plain) < 10_000:
         return (
@@ -170,14 +193,11 @@ def parse_filing(filing_path: Path) -> tuple[ParseResult, list[ParsedSection]]:
             [],
         )
 
-    # Step 3: Locate every Item-N candidate.
     all_candidates = _find_all_item_candidates(plain)
 
-    # Step 4: For each target section, find the best (start, end) pair, with
-    # fallback to the secondary end marker if the primary doesn't yield one.
     sections: list[ParsedSection] = []
     diagnostics: dict[str, float] = {}
-    for start_id, primary_end, fallback_end, friendly_name in TARGET_SECTIONS:
+    for start_id, primary_end, fallback_end, _friendly_name in TARGET_SECTIONS:
         result = _extract_section_with_fallback(
             plain,
             all_candidates,
@@ -193,7 +213,7 @@ def parse_filing(filing_path: Path) -> tuple[ParseResult, list[ParsedSection]]:
         if not (MIN_SECTION_CHARS <= len(text) <= MAX_SECTION_CHARS):
             diagnostics[start_id] = score
             continue
-        title = _extract_title(text, start_id, friendly_name)
+        title = _extract_title(text, start_id)
         sections.append(
             ParsedSection(
                 ticker=ticker,
@@ -239,10 +259,7 @@ def parse_filing(filing_path: Path) -> tuple[ParseResult, list[ParsedSection]]:
 
 
 def _extract_body_documents(raw: str) -> tuple[str, int]:
-    """Extract and concatenate every <DOCUMENT> block whose TYPE is body content.
-
-    Returns (concatenated_html, document_count). Returns ('', 0) if none found.
-    """
+    """Concatenate every <DOCUMENT> block whose TYPE is body content."""
     body_blocks: list[str] = []
     for m in re.finditer(r"<DOCUMENT>(.*?)</DOCUMENT>", raw, re.DOTALL | re.IGNORECASE):
         block_body = m.group(1)
@@ -250,11 +267,9 @@ def _extract_body_documents(raw: str) -> tuple[str, int]:
         if not type_match:
             continue
         doc_type = type_match.group(1).strip().upper()
-        # Match exact "10-K" but allow "EX-13" / "EX-13.1" / "EX-99" / "EX-99.1" etc.
         is_body = doc_type == "10-K" or doc_type.startswith("EX-13") or doc_type.startswith("EX-99")
         if is_body:
             body_blocks.append(block_body)
-
     return ("\n\n".join(body_blocks), len(body_blocks))
 
 
@@ -282,11 +297,9 @@ def _extract_section_with_fallback(
     """Try primary end marker; if no plausible pair, fall back to secondary."""
     primary = _extract_section(plain, all_candidates, start_id, primary_end_id)
     if primary is not None:
-        # Accept the primary if it produces a section above minimum length.
         start, end, score = primary
         if (end - start) >= MIN_SECTION_CHARS and score > -100:
             return primary
-    # Fall back to secondary end marker.
     return _extract_section(plain, all_candidates, start_id, fallback_end_id)
 
 
@@ -312,7 +325,6 @@ def _extract_section(
     best_pair: tuple[int, int] | None = None
 
     for start in start_candidates:
-        # Window around start: 120 chars before + 100 chars after for cross-ref detection.
         window = plain[max(0, start - 120) : start + 100]
         for end in end_candidates:
             if end <= start:
@@ -337,52 +349,122 @@ def _score_pair(
     gap = end - start
     score = 0.0
 
-    # 1. Reward gap length — real sections are tens of thousands of chars.
     score += (gap**0.5) / 5
 
-    # 2. Heavy penalty for cross-reference context.
     window_lower = window_around_start.lower()
     if any(phrase in window_lower for phrase in CROSS_REF_PHRASES):
         score -= 200
 
-    # 3. Density penalty — TOC entries cluster many markers very close together.
     very_close_before = sum(1 for p in all_marker_positions if start - 300 < p < start)
     score -= very_close_before * 30
 
-    # 4. Wider density: softer signal.
     nearby_before = sum(1 for p in all_marker_positions if start - 1500 < p < start - 300)
     score -= nearby_before * 5
 
-    # 5. Penalty for excessive markers between start and end.
     inside = sum(1 for p in all_marker_positions if start < p < end)
     if inside > 20:
         score -= (inside - 20) * 3
 
-    # 6. Hard sanity: ridiculously long sections.
     if gap > MAX_SECTION_CHARS:
         score -= 100
 
     return score
 
 
-def _extract_title(section_text: str, section_id: str, fallback: str) -> str:
-    """Pull the section title from the first ~400 chars."""
-    head = section_text[:400]
+# ---- Title extraction ---------------------------------------------------
+
+
+def _extract_title(section_text: str, section_id: str) -> str:
+    """Extract section title using a layered strategy.
+
+    Priority order:
+
+    Strategy 1: Standard SEC title match. If the section text contains a
+    recognized SEC-mandated title (case-insensitive), return the canonical
+    form. This handles uppercase variants and company-name-prefixed cases.
+    Examples:
+       Apple "Item 1A. Risk Factors The Company's..." → "Risk Factors"
+       Tesla "ITEM 7. MANAGEMENT'S DISCUSSION..."     → "Management's Discussion..."
+       BAC   "Item 7. Bank of America Corporation and Subsidiaries
+              Management's Discussion..."             → "Management's Discussion..."
+
+    Strategy 2: Inline extraction. For non-standard but well-formed titles,
+    capture text between "Item N." and a clear body-prose marker (a possessive
+    's or two consecutive sentence-opener words).
+
+    Fallback: SEC-canonical title from STANDARD_TITLES, or "Item N" if the
+    section_id isn't in our table.
+    """
+    head = section_text[:600]
+    section_id = section_id.upper()
+    standard = STANDARD_TITLES.get(section_id)
+
+    # Strategy 1: standard title match (highest priority).
+    if standard:
+        # Try the full canonical title first.
+        if re.search(re.escape(standard), head, re.IGNORECASE):
+            return standard
+        # Try a 40-char prefix of the standard title — handles slight
+        # variations in long titles where the filing omits trailing words.
+        prefix = standard[:40]
+        if len(prefix) >= 15 and re.search(re.escape(prefix), head, re.IGNORECASE):
+            return standard
+
+    # Strategy 2: inline extraction with body-prose terminator.
+    candidate = _extract_inline_title(head, section_id)
+    if candidate is not None:
+        return candidate
+
+    # Fallback: canonical SEC title or generic placeholder.
+    return standard or f"Item {section_id}"
+
+
+def _extract_inline_title(head: str, section_id: str) -> str | None:
+    """Extract a non-standard title from inline text.
+
+    Matches "Item N. <TITLE>" where <TITLE> is bounded by:
+      - a possessive marker ('s) — body prose like "The Company's..."
+      - two-word capitalized opener — body prose like "The following discussion..."
+    """
+    title_chars = r"A-Za-z\u2018\u2019\u201c\u201d\s\-,&"
     m = re.match(
-        rf"\s*Item\s*{re.escape(section_id)}\.?\s+([A-Z][A-Za-z'\u2019\s\-,&]{{2,95}}?)\s+(?:[A-Z][a-z]+\s+){{2,}}",
+        rf"\s*Item\s*{re.escape(section_id)}\.?\s+"
+        rf"([A-Za-z][{title_chars}]{{4,90}}?)"
+        rf"(?:\s+(?:[A-Z][a-z]+\s+){{2,}}|['\u2019]s\s+)",
         head,
         re.IGNORECASE,
     )
-    if m:
-        return m.group(1).strip()
-    m = re.match(
-        rf"\s*Item\s*{re.escape(section_id)}\.?\s+([^\.]{{2,90}})",
-        head,
-        re.IGNORECASE,
+    if not m:
+        return None
+    candidate = m.group(1).strip()
+    if not _looks_like_title(candidate):
+        return None
+    return candidate
+
+
+def _looks_like_title(text: str) -> bool:
+    """Sanity check: reject candidates that are clearly cross-references."""
+    text_lower = text.lower()
+    crossref_markers = (
+        " of the company",
+        " of part i",
+        " of part ii",
+        " annual report",
+        " of this form",
+        " incorporated by reference",
     )
-    if m:
-        return m.group(1).strip()
-    return fallback
+    if any(m in text_lower for m in crossref_markers):
+        return False
+    words = text.split()
+    if not words:
+        return False
+    first_word = words[0].lower()
+    if first_word in {"of", "in", "under", "for", "from", "to", "at", "with"}:
+        return False
+    return len(words) >= 2
+
+
+# ---- Pipeline orchestration ---------------------------------------------
 
 
 def parse_all(

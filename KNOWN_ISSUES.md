@@ -4,7 +4,7 @@ A running list of edge cases observed during development. Documented but not
 fixed, so day-by-day momentum doesn't stall on tangents. Items here are
 candidates for "what I'd do differently in production" in the final README.
 
-## Filing pattern: incorporation by reference (corpus-shaping decision)
+## Filing pattern: incorporation by reference
 
 Some SEC filers — primarily large banks and conglomerates — file 10-Ks under
 SEC Rule 12b-23, which permits incorporation by reference. Under this pattern:
@@ -19,52 +19,36 @@ SEC Rule 12b-23, which permits incorporation by reference. Under this pattern:
   attachment ("Annual Report to Shareholders").
 - Within the EX-13, content is organized under topic headings ("Credit Risk",
   "Operational Risk Management", "Market Risk", "Financial Review") rather
-  than Item-N anchors. Risk-related prose is also distributed throughout the
-  document interleaved with financial statements, capital tables, and
-  governance discussion — there is no contiguous "Item 1A" block to extract.
+  than Item-N anchors.
 
-### Examples observed
+Examples observed: GE, Honeywell, McDonald's, Morgan Stanley, Wells Fargo.
+Excluded from the corpus; replaced with DIS, LOW, TGT, C, AXP.
 
-GE, Honeywell, McDonald's, Morgan Stanley, Wells Fargo. Diagnostic for WFC
-2022 found 34 occurrences of the literal string "Risk Factors", but every
-one was either (a) a forward-reference inside the summary stub or (b) inline
-prose referring back to risk factors discussed elsewhere. None marked the
-start of a contiguous section.
+## Filing pattern: non-Item section anchors (Citigroup)
 
-### Why we excluded these tickers
+Citigroup's 10-K filings (2022-2025) don't use the literal string "Item 1A"
+or "Item 7" anywhere in the body. Their cross-reference index lists sections
+as standalone tokens — `"1A. Risk Factors"`, `"7. Management's Discussion"` —
+without the word "Item" in front. Actual section headings are all-caps topic
+labels: `"RISK FACTORS"`, `"MANAGING GLOBAL RISK"`, etc.
 
-Reliable extraction would require either:
+Diagnostic for Citi 2022:
+- 1.6 MB of plain text, only 1 occurrence of the standalone token `"1A."`
+- 56 occurrences of `"Risk Factors"` — these are the real anchors
+- Zero occurrences of `"Item 1A"`, `"Item 7"`, etc.
 
-1. **NLP-based section classification** — train or prompt a model to identify
-   risk-related paragraphs and bound them as a virtual "Item 1A". This is a
-   real engineering project, not a parser tweak.
-2. **Per-ticker manual mapping** — hand-encode where each filer's risk content
-   lives. Doesn't scale and is brittle to filing-format changes.
-3. **Fixed-window extraction** — take a heuristic byte range as "Item 1A".
-   Cheap but pollutes the eval corpus with non-risk content (~30% of the
-   captured window in the WFC case).
-
-For this project, where the eval system is the centerpiece deliverable,
-corpus quality matters more than corpus breadth. We swapped the 5 problem
-tickers for clean alternatives (DIS, TGT, LOW, C, AXP) that use single-
-document filings with standard Item-N anchors, preserving the 30-ticker
-size while ensuring every filing in the corpus is reliably parsed.
-
-### Detecting this pattern programmatically
-
-If you wanted to detect IBR filings in a future ingestion run:
-- An Item 1A → Item 1B span under 2,000 characters is a strong signal
-- Multiple `<DOCUMENT TYPE="EX-13">` or `<DOCUMENT TYPE="EX-99">` blocks
-  with size > 1 MB suggests body content lives outside the primary 10-K
-- The phrase *"incorporated into this item by reference"* appearing 3+
-  times in the primary document is nearly definitive
+Reliable extraction would require a third detection strategy that scores
+topic-name candidates ("Risk Factors", "Management's Discussion") with the
+same gap/density/cross-reference logic, but anchored on different tokens.
+This is feasible but out of scope for the current iteration. Citi (4 filings)
+is the only ticker in our corpus affected; remaining 116/120 filings parse
+above the quality threshold.
 
 ## Smaller issues
 
-### Older filings (pre-2010) — not currently in scope
+### Older filings (pre-2010) — not in scope
 Pre-2010 10-Ks sometimes use `<b>` or `<font weight=...>` styling instead of
-inline CSS `font-weight:700`. The current parser handles modern (post-2012)
-filings well; older filings are out of scope (the corpus uses 2022-2025).
+inline CSS `font-weight:700`. Out of scope (corpus uses 2022-2025).
 
 ### Chunk boundaries split tables (Day 3 issue)
 `RecursiveCharacterTextSplitter` doesn't respect HTML table structure;
