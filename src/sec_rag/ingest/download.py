@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 import shutil
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from sec_edgar_downloader import Downloader
@@ -190,7 +190,7 @@ def _locate_primary_filing(base_dir: Path, ticker: str) -> Path | None:
 def _write_run_report(records: list[FilingRecord], output_dir: Path) -> None:
     """Write a JSON run report with every filing's status. Used in commit messages."""
     report = {
-        "run_at": datetime.now(timezone.utc).isoformat(),
+        "run_at": datetime.now(UTC).isoformat(),
         "total_attempted": len(records),
         "downloaded": sum(1 for r in records if r.status == "downloaded"),
         "skipped_existing": sum(1 for r in records if r.status == "skipped_existing"),

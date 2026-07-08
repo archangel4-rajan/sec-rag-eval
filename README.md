@@ -1,243 +1,126 @@
 # sec-rag-eval
 
-> An evaluation-first RAG system over SEC 10-K filings. Built around the principle that production AI quality lives or dies on the eval harness, not the model.
+Evaluation-first RAG over SEC 10-K filings. The point is not another chat-with-docs demo; the point is knowing when the system is wrong.
 
 [![CI](https://github.com/archangel4-rajan/sec-rag-eval/actions/workflows/eval.yml/badge.svg)](https://github.com/archangel4-rajan/sec-rag-eval/actions/workflows/eval.yml)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 
-## About
+## Current State
 
-A financial-domain Retrieval-Augmented Generation system over SEC 10-K filings, designed around a rigorous evaluation harness that catches retrieval and generation failures before they reach users. The retrieval and generation stack is intentionally conventional. The evaluation infrastructure — a hand-curated golden dataset, per-category scoring, regression CI, and observability — is the centerpiece.
-
-Author: [Rajan Anand](https://www.linkedin.com/in/rajan-anand/) · ML/AI engineering portfolio project
-
-## Contents
-
-- [Why this exists](#why-this-exists)
-- [Architecture](#architecture)
-- [Corpus](#corpus)
-- [Parsing methodology](#parsing-methodology)
-- [Evaluation methodology](#evaluation-methodology)
-- [Results](#results)
-- [Quickstart](#quickstart)
-- [Repository layout](#repository-layout)
-- [Design decisions](#design-decisions)
-- [Roadmap](#roadmap)
-- [Limitations](#limitations)
-- [License](#license)
-
-## Why this exists
-
-Most RAG demos answer the easy half of the question: *can you build one?* Production systems live or die on the harder half: *can you tell when it's wrong, before users do?*
-
-This project answers the second question. The deliverables that matter:
-
-- A hand-curated golden dataset of 130 question/answer pairs spanning factual recall, multi-hop reasoning, numerical extraction, and adversarial cases the system must refuse
-- Per-category scoring across faithfulness, answer relevance, context precision/recall, hallucination rate, and refusal accuracy — broken out separately because aggregate scores hide the failure modes that matter
-- A CI gate that blocks pull requests which regress quality on the eval suite
-- End-to-end tracing capturing retrieval, prompts, latency, and per-query token cost
-- A documented experiment log showing what was tried, what improved scores, and what was reverted
+- Corpus: 120 target 10-K filings across 30 tickers and fiscal years 2022-2025.
+- Parser: extracts Item 1A and Item 7 from 116/120 filings; incorporation-by-reference edge cases are documented, not silently corrupted.
+- Chunks: 10,846 local chunks generated at 512 tokens with 50-token overlap.
+- Retrieval: Chroma-backed vector retrieval with metadata filters; OpenAI embeddings for real runs and a deterministic hash provider for offline CI/smoke tests.
+- Query path: extractive citation-grounded baseline, FastAPI `/query`, and explicit refusal handling for unsupported/private/predictive requests.
+- Evaluation: committed 25-row seed golden set, deterministic scoring, dataset validation, retrieval sweep runner, and CI checks.
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    subgraph Ingestion
-        A[SEC EDGAR<br/>10-K filings] --> B[Parser<br/>Item 1A + Item 7]
-        B --> C[Chunker<br/>512 tokens, 50 overlap]
-        C --> D[Embedder<br/>text-embedding-3-small]
-    end
-
-    subgraph Storage
-        D --> E[(ChromaDB<br/>vector store)]
-    end
-
-    subgraph Query_path["Query path"]
-        Q[Query] --> R[Retriever]
-        R --> E
-        R --> G[Generator<br/>OpenAI / Anthropic / Llama]
-        G --> RES[Response<br/>with citations]
-    end
-
-    subgraph Eval["Eval & Observability"]
-        GOLD[Golden dataset<br/>130 Q/A pairs] --> EVAL[Eval harness]
-        EVAL --> R
-        EVAL --> CI[CI regression gate]
-        R -.traces.-> OBS[Langfuse]
-        G -.traces.-> OBS
-    end
-
-    style EVAL fill:#fff3cd,stroke:#856404
-    style CI fill:#fff3cd,stroke:#856404
-    style GOLD fill:#fff3cd,stroke:#856404
+    EDGAR["SEC EDGAR 10-Ks"] --> PARSE["Item parser"]
+    PARSE --> CHUNK["Chunker"]
+    CHUNK --> EMBED["Embedding provider"]
+    EMBED --> STORE[("Chroma")]
+    QUERY["Question"] --> POLICY["Refusal policy"]
+    POLICY --> RETRIEVE["Retriever"]
+    RETRIEVE --> STORE
+    RETRIEVE --> ANSWER["Citation-grounded answer"]
+    GOLD["Golden eval set"] --> EVAL["Eval runner"]
+    EVAL --> POLICY
+    EVAL --> RETRIEVE
+    EVAL --> CI["CI validation"]
 ```
 
-The eval harness, CI gate, and golden dataset (highlighted) are what differentiate this project from a typical RAG demo.
-
-## Corpus
-
-**120 SEC 10-K filings** spanning **30 companies** across **4 fiscal years** (2022–2025), totaling ~28K embedding-ready chunks after parsing and segmentation. Companies are selected across three sectors:
-
-- **Technology** (10): AAPL, MSFT, NVDA, GOOGL, META, AMZN, TSLA, ORCL, CRM, ADBE
-- **Industrials & Consumer** (10): CAT, DIS, LOW, PG, KO, PEP, NKE, TGT, WMT, COST
-- **Financials & Health** (10): JPM, BAC, GS, C, AXP, UNH, JNJ, PFE, CVS, ABBV
-
-Sectors are mixed deliberately so the eval can distinguish retrieval quality from parametric leakage — a model trained on the public web has strong priors on Apple but weak priors on Caterpillar, which exposes whether retrieved context actually drives answers.
-
-Filings are sourced from SEC EDGAR via [`sec-edgar-downloader`](https://pypi.org/project/sec-edgar-downloader/). Item 1A (Risk Factors) and Item 7 (Management's Discussion & Analysis) are extracted and chunked at 512 tokens with 50-token overlap.
-
-## Parsing methodology
-
-10-K filings are notoriously inconsistent across filers. Building a robust parser required handling three structurally distinct filing patterns observed in the corpus:
-
-| Pattern | Example filers | Section heading style |
-|---|---|---|
-| **Bold inline headings** | Apple, Google, Meta, Tesla | CSS `font-weight:700` on `<span>` wrapping "Item 1A. Risk Factors" |
-| **Table-layout headings** | Amazon, Costco, Walmart | `font-weight:400` (non-bold) inside `<td>` cells |
-| **Split-document submissions** | Bank of America, Morgan Stanley | Body content in a separate `<DOCUMENT TYPE="EX-13">` block, not the primary 10-K |
-
-A regex-only parser would require a different strategy per pattern. Instead, the parser operates on plain text after a single HTML strip, scoring every "Item N" candidate by structural signals that hold across all three patterns:
-
-- **Gap length** to the next expected section marker (real sections span 30K–300K characters; TOC entries span ~100)
-- **Cross-reference detection** in a window around the candidate (phrases like *"see Item 7 of Part II"* or *"discussed in Item 1A"*)
-- **Marker density** before the candidate (TOC entries cluster many Item-N markers within a few hundred characters; real headings stand alone)
-- **End-marker fallback** — Item 1A normally ends at Item 1B, but falls back to Item 2 when 1B is absent; Item 7 ends at Item 7A, falling back to Item 8
-
-**Result: 116 of 120 filings (97%) are fully parsed** with both target sections extracted above quality thresholds. Excluded filings (Citigroup, plus 5 incorporation-by-reference filers like GE and Wells Fargo) are documented in [`KNOWN_ISSUES.md`](KNOWN_ISSUES.md) as a deliberate scope decision rather than a parser bug — these filings use SEC Rule 12b-23 incorporation by reference, where body content lives under topic headings ("Credit Risk", "Operational Risk") rather than Item-N anchors, requiring NLP-grade section detection that's out of scope for this project.
-
-## Evaluation methodology
-
-The golden dataset contains 130 question/answer pairs, each manually verified against source filings, distributed across five categories chosen to stress different system behaviors:
-
-| Category | Count | What it tests |
-|---|---|---|
-| Single-hop factual | 30 | Basic retrieval — find one passage and quote it correctly |
-| Multi-hop | 25 | Cross-filing synthesis — comparing risks or claims across years or companies |
-| Numerical | 25 | Quantitative extraction with relative-tolerance scoring |
-| Should-refuse | 25 | Out-of-scope queries the system must decline (predictions, missing companies) |
-| Adversarial | 25 | Date-qualified queries, needle-in-haystack retrieval, near-miss distractors |
-
-Each query is scored on multiple dimensions:
-
-- **Faithfulness** (Ragas) — proportion of answer claims supported by retrieved context
-- **Answer relevance** (Ragas) — does the answer address the question asked
-- **Context precision / recall** (Ragas) — quality of the retrieved chunks
-- **Hallucination rate** — LLM-judge verdict on unsupported claims, using a different model family as judge to avoid same-model agreement bias
-- **Refusal accuracy** — binary scoring on should-refuse questions
-- **Numerical correctness** — relative-tolerance scoring for quantitative answers
-
-Scores are reported per-category. Aggregated averages reward the easy questions and hide systematic failure on the hard ones — a system at 94% overall might be 99% on factual questions and 60% on multi-hop, and the latter is what determines whether the system can ship.
-
-## Results
-
-*Populated after model comparison study (see [Roadmap](#roadmap)). Reserved structure shown below.*
-
-| Category | GPT-4o-mini | Claude Sonnet | Llama-3.1-70B |
-|---|---|---|---|
-| Single-hop factual | — | — | — |
-| Multi-hop | — | — | — |
-| Numerical | — | — | — |
-| Should-refuse | — | — | — |
-| Adversarial | — | — | — |
-| **p95 latency (ms)** | — | — | — |
-| **Cost per 1k queries** | — | — | — |
+The model layer is intentionally conventional. The durable asset is the evaluation loop: golden examples, deterministic checks, experiment artifacts, and honest reporting of failure modes.
 
 ## Quickstart
 
-Requires Python 3.11+ and [uv](https://github.com/astral-sh/uv).
+Requires Python 3.11+ and `uv`.
 
 ```bash
-git clone https://github.com/archangel4-rajan/sec-rag-eval.git
-cd sec-rag-eval
 uv sync --extra dev
-
 cp .env.example .env
-# Set OPENAI_API_KEY, ANTHROPIC_API_KEY, and SEC_USER_AGENT
+```
 
-# Build the corpus (~20 min, ~$1 in embedding costs)
+Build a real corpus and vector index:
+
+```bash
 uv run sec-rag ingest download
 uv run sec-rag ingest parse
-uv run sec-rag ingest chunk     # roadmap
-uv run sec-rag ingest embed     # roadmap
-
-# Single query
-uv run sec-rag query "What were Apple's primary supply chain risks in 2023?"   # roadmap
-
-# Full eval run
-uv run sec-rag eval run --dataset data/eval/golden.jsonl   # roadmap
+uv run sec-rag ingest chunk
+uv run sec-rag ingest embed
 ```
 
-Run the test suite at any time:
+Run fully offline with deterministic hash embeddings:
 
 ```bash
-uv run pytest
+uv run sec-rag ingest chunk
+uv run sec-rag ingest embed --provider hash --reset
+uv run sec-rag query "What supply chain risks did Apple describe?" --provider hash --ticker AAPL --section 1A --top-k 3
 ```
 
-## Repository layout
+Validate and run the eval suite:
 
-```
-sec-rag-eval/
-├── src/sec_rag/
-│   ├── ingest/      Download, parse, chunk, embed
-│   ├── retrieve/    Vector store and retriever with metadata filtering
-│   ├── generate/    Model-agnostic LLM client and RAG chain
-│   ├── eval/        Scorers, golden dataset loader, eval runner
-│   ├── api/         FastAPI service exposing /query and /health
-│   └── observe/     Langfuse instrumentation
-├── data/
-│   ├── filings/     Raw 10-Ks (gitignored, ~3 GB)
-│   ├── chunks/      Parsed sections (gitignored)
-│   └── eval/        Golden dataset (committed)
-├── experiments/     One subdirectory per documented experiment, with results
-├── scripts/         Diagnostic and one-off scripts
-├── tests/           pytest unit + integration tests
-└── .github/workflows/  CI pipeline including the eval regression gate
+```bash
+uv run sec-rag eval validate --dataset data/eval/golden.jsonl --check-evidence
+uv run sec-rag eval run --provider hash --top-k 5 --output experiments/baseline_eval/results.json
+uv run sec-rag experiment retrieval --provider hash --top-k-values 1,3,5 --output experiments/retrieval_sweep/results.json
 ```
 
-## Design decisions
+## Documentation
 
-A few choices worth calling out, with the reasoning:
+- [Technical report](REPORT.md): current evidence, results, limitations, and next work.
+- [Evaluation protocol](docs/EVAL_PROTOCOL.md): categories, scoring rules, confidence intervals, and refusal grading.
+- [Dataset card](docs/DATASET_CARD.md): corpus, seed set, validation checks, and expansion target.
+- [Architecture](docs/ARCHITECTURE.md): implementation path from SEC filings to evaluated answers.
+- [Product brief](docs/PRODUCT_BRIEF.md): concise product framing and positioning.
 
-**Plain-text parsing over HTML structure.** HTML styling conventions vary across filers and across years. Operating on plain text after a single strip step makes the parser format-agnostic at the cost of some fidelity. Tradeoff: simplicity and broad coverage over perfect extraction for any single template.
+## Measured Baseline
 
-**ChromaDB over Pinecone or Weaviate.** Local-first, no managed-service dependency, fast enough for ~28K chunks. Migrating to a hosted vector DB is a configuration change, not an architecture change.
+The checked local baseline is deliberately modest: hash embeddings plus extractive answers over a 25-example seed set.
 
-**Per-category scoring instead of aggregate.** Aggregate scores reward the easy questions and hide systematic failure on the hard ones. Multi-hop and adversarial categories are the actual quality signal; factual recall is table stakes.
+| Run | Pass rate | Notes |
+|---|---:|---|
+| [Hash baseline, top_k=5](experiments/baseline_eval/report.md) | 0.40 | Stricter scorer requires numeric answers to cite expected evidence. |
+| Retrieval sweep, top_k=1 | 0.28 | Too little context. |
+| [Retrieval sweep, top_k=3](experiments/retrieval_sweep/report.md) | 0.40 | Best observed offline setting. |
+| Retrieval sweep, top_k=5 | 0.40 | No gain over top_k=3 in the seed set. |
 
-**Cross-model LLM-as-judge.** The hallucination scorer uses Claude to judge GPT outputs and vice-versa. Same-model self-evaluation has well-documented agreement bias; switching families costs more but produces verdicts that correlate better with human review.
+Category signal matters more than the aggregate. The refusal policy passes the current should-refuse set; multi-hop remains weak under hash retrieval, which is expected and useful because it exposes the next real bottleneck.
 
-**Eval gate in CI rather than post-deploy.** The faster a regression is caught, the cheaper it is to fix. A prompt change that drops faithfulness by 3 points should fail the PR, not require a rollback.
+## Repository Layout
 
-**Curated 30-ticker corpus instead of broad coverage.** Reliable evaluation requires reliable parsing. Five filers using SEC Rule 12b-23 incorporation-by-reference were swapped for alternatives with standard section anchors. Documented exclusion is more honest than silent corruption of the eval set.
+```text
+src/sec_rag/
+  api/        FastAPI service
+  eval/       dataset validation, scoring, experiment runners
+  generate/   RAG query engine and refusal policy
+  ingest/     download, parse, chunk, embed
+  retrieve/   Chroma retrieval
+data/eval/    committed golden seed set
+experiments/  baseline, retrieval sweep, model comparison notes
+tests/        focused unit and integration coverage
+```
 
-## Roadmap
+Generated filings, chunks, vectors, and run results are local artifacts unless explicitly committed.
 
-| Phase | Status |
-|---|---|
-| Ingestion pipeline (download, parse) | ✅ Complete |
-| Chunking and embedding | 🚧 In progress |
-| Retrieval layer (ChromaDB + retriever) | Planned |
-| Generation layer (LLM abstraction, RAG chain) | Planned |
-| FastAPI service | Planned |
-| Golden dataset curation | Planned |
-| Eval harness (Ragas + custom scorers) | Planned |
-| Experiments (chunking, retrieval, query rewriting) | Planned |
-| Observability (Langfuse traces, dashboards) | Planned |
-| CI eval gate + cross-model benchmark | Planned |
+## Quality Bar
 
-## Limitations
+- Do not claim unsupported model quality. Hash embeddings are for deterministic offline verification only.
+- Do not average away failure modes. Report single-hop, multi-hop, numerical, refusal, and adversarial behavior separately.
+- Do not treat parser misses as data. Known SEC filing patterns that need separate extraction logic are listed in `KNOWN_ISSUES.md`.
+- Do not ship a model comparison until provider-backed embeddings, answerers, and judges have actually been run.
 
-What this project deliberately does not address:
+## Next Work
 
-- **Prompt-injection guardrails.** No defenses against adversarial input; production deployment would require input validation and output filtering.
-- **PII filtering.** 10-Ks are public, so this isn't a concern for the demo corpus, but private-document RAG would require a redaction layer.
-- **XBRL structured data.** Quantitative questions are answered from prose in MD&A and Risk Factors. Structured financial data from XBRL would improve numerical accuracy but is out of scope.
-- **Eval-set size.** 130 questions catches obvious failure modes; production systems need 10×+ that, ideally with multiple annotators per question for inter-rater agreement.
-- **Operational maturity.** Runbooks, on-call procedures, and cost-anomaly alerts are not implemented.
-- **Incorporation-by-reference filings.** See [`KNOWN_ISSUES.md`](KNOWN_ISSUES.md) — five filers using SEC Rule 12b-23 are excluded from the corpus by design.
+1. Rebuild embeddings with a production provider and rerun the eval suite.
+2. Expand the golden set from 25 seed examples toward the original 130-example target.
+3. Add provider-backed answer generation and cross-model judging.
+4. Turn the model-comparison scaffold into measured results with latency and cost.
+5. Add observability traces once the semantic baseline is worth observing.
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT.

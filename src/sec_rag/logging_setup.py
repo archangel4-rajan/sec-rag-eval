@@ -5,6 +5,7 @@ Use `get_logger(__name__)` everywhere. Logs are JSON in production-style format.
 
 import logging
 import sys
+from typing import cast
 
 import structlog
 
@@ -23,16 +24,14 @@ def configure_logging(level: str = "INFO") -> None:
             structlog.processors.TimeStamper(fmt="iso"),
             structlog.dev.ConsoleRenderer(colors=True),
         ],
-        wrapper_class=structlog.make_filtering_bound_logger(
-            getattr(logging, level.upper())
-        ),
+        wrapper_class=structlog.make_filtering_bound_logger(getattr(logging, level.upper())),
         cache_logger_on_first_use=True,
     )
 
 
 def get_logger(name: str) -> structlog.stdlib.BoundLogger:
     """Get a logger bound to the given name."""
-    return structlog.get_logger(name)
+    return cast(structlog.stdlib.BoundLogger, structlog.get_logger(name))
 
 
 # Configure on import so scripts get logging without ceremony.

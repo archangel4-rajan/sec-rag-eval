@@ -1,0 +1,609 @@
+{
+  "total_examples": 25,
+  "passed_examples": 10,
+  "pass_rate": 0.4,
+  "pass_rate_ci_95": {
+    "low": 0.23403057664190918,
+    "high": 0.5926087221487266,
+    "method": "wilson_95"
+  },
+  "metrics": {
+    "avg_answer_overlap": 0.45693849723261487,
+    "avg_evidence_recall": 0.25,
+    "avg_citation_precision": 0.08333333333333333,
+    "refusal_accuracy": 1.0,
+    "numeric_accuracy": 0.5,
+    "avg_latency_ms": 36.579414904117584
+  },
+  "failure_summary": {
+    "failed_examples": 15,
+    "zero_evidence_recall": 15,
+    "numeric_incorrect": 3,
+    "refusal_incorrect": 0,
+    "weak_answer_overlap": 4
+  },
+  "by_category": {
+    "adversarial": {
+      "count": 5,
+      "passed": 1,
+      "pass_rate": 0.2,
+      "pass_rate_ci_95": {
+        "low": 0.03622316096978745,
+        "high": 0.6244717358814613,
+        "method": "wilson_95"
+      },
+      "avg_answer_overlap": 0.3307692307692308,
+      "avg_evidence_recall": 0.2,
+      "avg_citation_precision": 0.06666666666666667,
+      "refusal_accuracy": 0.0,
+      "numeric_accuracy": 0.0,
+      "avg_latency_ms": 14.15942469611764
+    },
+    "multi_hop": {
+      "count": 5,
+      "passed": 0,
+      "pass_rate": 0.0,
+      "pass_rate_ci_95": {
+        "low": 0.0,
+        "high": 0.43449149475208104,
+        "method": "wilson_95"
+      },
+      "avg_answer_overlap": 0.4674843674843675,
+      "avg_evidence_recall": 0.0,
+      "avg_citation_precision": 0.0,
+      "refusal_accuracy": 0.0,
+      "numeric_accuracy": 0.0,
+      "avg_latency_ms": 11.667341832071543
+    },
+    "numerical": {
+      "count": 5,
+      "passed": 2,
+      "pass_rate": 0.4,
+      "pass_rate_ci_95": {
+        "low": 0.1176182311592533,
+        "high": 0.769280067791163,
+        "method": "wilson_95"
+      },
+      "avg_answer_overlap": 0.7537878787878788,
+      "avg_evidence_recall": 0.4,
+      "avg_citation_precision": 0.13333333333333333,
+      "refusal_accuracy": 0.0,
+      "numeric_accuracy": 0.6,
+      "avg_latency_ms": 44.535824935883284
+    },
+    "should_refuse": {
+      "count": 5,
+      "passed": 5,
+      "pass_rate": 1.0,
+      "pass_rate_ci_95": {
+        "low": 0.5655085052479191,
+        "high": 1.0,
+        "method": "wilson_95"
+      },
+      "avg_answer_overlap": 0.3488400488400488,
+      "avg_evidence_recall": 0.0,
+      "avg_citation_precision": 0.0,
+      "refusal_accuracy": 1.0,
+      "numeric_accuracy": 0.0,
+      "avg_latency_ms": 0.004899874329566956
+    },
+    "single_hop": {
+      "count": 5,
+      "passed": 2,
+      "pass_rate": 0.4,
+      "pass_rate_ci_95": {
+        "low": 0.1176182311592533,
+        "high": 0.769280067791163,
+        "method": "wilson_95"
+      },
+      "avg_answer_overlap": 0.3838109602815485,
+      "avg_evidence_recall": 0.4,
+      "avg_citation_precision": 0.13333333333333333,
+      "refusal_accuracy": 0.0,
+      "numeric_accuracy": 0.0,
+      "avg_latency_ms": 112.52958318218589
+    }
+  },
+  "results": [
+    {
+      "id": "single_aapl_2022_supply_chain_location",
+      "category": "single_hop",
+      "passed": true,
+      "refused_correctly": null,
+      "evidence_recall": 1.0,
+      "citation_precision": 0.3333333333333333,
+      "answer_overlap": 0.8235294117647058,
+      "numeric_correct": null,
+      "retrieved_count": 5,
+      "latency_ms": 430.50379073247313,
+      "cited_ids": [
+        "AAPL_2022_item1A_chunk0014",
+        "AAPL_2022_item1A_chunk0024",
+        "AAPL_2022_item1A_chunk0000"
+      ],
+      "expected_evidence_ids": [
+        "AAPL_2022_item1A_chunk0000"
+      ],
+      "answer": "Based on the retrieved SEC filing passages: Although malicious attacks perpetrated to gain access to confidential information, including personal information, affect many companies across various industries, the Company is at a relatively greater risk of being targeted because of its high profile and the value of the confidential information it creates, owns,... [1] While the Company has procedures to monitor and limit exposure to credit risk on its trade and vendor non-trade receivables, as well as long-term prepayments, there can be no assurance such procedures will effectively limit its credit risk and avoid losses. [2] In addition, the Company\u2019s global supply chain is large and complex and a majority of the Company\u2019s supplier facilities, including manufacturing and assembly sites, are located outside the U.S. [3]"
+    },
+    {
+      "id": "single_aapl_2022_trade_policy_risk",
+      "category": "single_hop",
+      "passed": false,
+      "refused_correctly": null,
+      "evidence_recall": 0.0,
+      "citation_precision": 0.0,
+      "answer_overlap": 0.16666666666666666,
+      "numeric_correct": null,
+      "retrieved_count": 5,
+      "latency_ms": 13.939542230218649,
+      "cited_ids": [
+        "AAPL_2022_item1A_chunk0024",
+        "AAPL_2022_item1A_chunk0022",
+        "AAPL_2022_item1A_chunk0023"
+      ],
+      "expected_evidence_ids": [
+        "AAPL_2022_item1A_chunk0002"
+      ],
+      "answer": "Based on the retrieved SEC filing passages: While the Company has procedures to monitor and limit exposure to credit risk on its trade and vendor non-trade receivables, as well as long-term prepayments, there can be no assurance such procedures will effectively limit its credit risk and avoid losses. [1] The Company\u2019s gross margins are subject to volatility and downward pressure due to a variety of factors, including: continued industry-wide global product pricing pressures and product pricing actions that the Company may take in response to such pressures; increased competition; the Company\u2019s ability to effectively... [2] The Company\u2019s investments can be negatively affected by changes in liquidity, credit deterioration, financial results, market and economic conditions, political risk, sovereign risk, interest rate fluctuations or other factors. [3]"
+    },
+    {
+      "id": "single_aapl_2022_competition_risk",
+      "category": "single_hop",
+      "passed": false,
+      "refused_correctly": null,
+      "evidence_recall": 0.0,
+      "citation_precision": 0.0,
+      "answer_overlap": 0.46153846153846156,
+      "numeric_correct": null,
+      "retrieved_count": 5,
+      "latency_ms": 14.264666009694338,
+      "cited_ids": [
+        "AAPL_2022_item1A_chunk0024",
+        "AAPL_2022_item1A_chunk0022",
+        "AAPL_2022_item1A_chunk0023"
+      ],
+      "expected_evidence_ids": [
+        "AAPL_2022_item1A_chunk0004"
+      ],
+      "answer": "Based on the retrieved SEC filing passages: While the Company has procedures to monitor and limit exposure to credit risk on its trade and vendor non-trade receivables, as well as long-term prepayments, there can be no assurance such procedures will effectively limit its credit risk and avoid losses. [1] The Company\u2019s gross margins are subject to volatility and downward pressure due to a variety of factors, including: continued industry-wide global product pricing pressures and product pricing actions that the Company may take in response to such pressures; increased competition; the Company\u2019s ability to effectively... [2] The Company\u2019s investments can be negatively affected by changes in liquidity, credit deterioration, financial results, market and economic conditions, political risk, sovereign risk, interest rate fluctuations or other factors. [3]"
+    },
+    {
+      "id": "single_aapl_2022_fx_exposure",
+      "category": "single_hop",
+      "passed": true,
+      "refused_correctly": null,
+      "evidence_recall": 1.0,
+      "citation_precision": 0.3333333333333333,
+      "answer_overlap": 0.4117647058823529,
+      "numeric_correct": null,
+      "retrieved_count": 5,
+      "latency_ms": 14.206083957105875,
+      "cited_ids": [
+        "AAPL_2022_item1A_chunk0023",
+        "AAPL_2022_item1A_chunk0022",
+        "AAPL_2022_item1A_chunk0024"
+      ],
+      "expected_evidence_ids": [
+        "AAPL_2022_item1A_chunk0023"
+      ],
+      "answer": "Based on the retrieved SEC filing passages: The Company\u2019s primary exposure to movements in foreign currency exchange rates relates to non\u2013U.S. [1] The Company\u2019s gross margins are subject to volatility and downward pressure due to a variety of factors, including: continued industry-wide global product pricing pressures and product pricing actions that the Company may take in response to such pressures; increased competition; the Company\u2019s ability to effectively... [2] While the Company has procedures to monitor and limit exposure to credit risk on its trade and vendor non-trade receivables, as well as long-term prepayments, there can be no assurance such procedures will effectively limit its credit risk and avoid losses. [3]"
+    },
+    {
+      "id": "single_aapl_2024_ai_safety_risk",
+      "category": "single_hop",
+      "passed": false,
+      "refused_correctly": null,
+      "evidence_recall": 0.0,
+      "citation_precision": 0.0,
+      "answer_overlap": 0.05555555555555555,
+      "numeric_correct": null,
+      "retrieved_count": 5,
+      "latency_ms": 89.73383298143744,
+      "cited_ids": [
+        "AAPL_2024_item1A_chunk0023",
+        "AAPL_2024_item1A_chunk0022",
+        "AAPL_2024_item1A_chunk0021"
+      ],
+      "expected_evidence_ids": [
+        "AAPL_2024_item1A_chunk0007"
+      ],
+      "answer": "Based on the retrieved SEC filing passages: While the Company has procedures to monitor and limit exposure to credit risk on its trade and vendor non-trade receivables, as well as long-term prepayments, there can be no assurance such procedures will effectively limit its credit risk and avoid losses. [1] The Company is exposed to credit risk and fluctuations in the values of its investment portfolio. [2] The Company\u2019s gross margins are subject to volatility and downward pressure due to a variety of factors, including: continued industry-wide global product pricing pressures and product pricing actions that the Company may take in response to such pressures; increased competition; the Company\u2019s ability to effectively... [3]"
+    },
+    {
+      "id": "numerical_adbe_2022_document_cloud_revenue",
+      "category": "numerical",
+      "passed": true,
+      "refused_correctly": null,
+      "evidence_recall": 1.0,
+      "citation_precision": 0.3333333333333333,
+      "answer_overlap": 0.8333333333333334,
+      "numeric_correct": true,
+      "retrieved_count": 5,
+      "latency_ms": 163.74241700395942,
+      "cited_ids": [
+        "ADBE_2022_item7_chunk0063",
+        "ADBE_2022_item7_chunk0066",
+        "ADBE_2022_item7_chunk0069"
+      ],
+      "expected_evidence_ids": [
+        "ADBE_2022_item7_chunk0063"
+      ],
+      "answer": "Based on the retrieved SEC filing passages: Document Cloud revenue in fiscal 2022 was $2.38 billion, up from $1.97 billion in fiscal 2021 and representing 21% year-over-year growth. [1] Document Cloud revenue of $2.38 billion increased by $409 million, or 21%, during fiscal 2022, from $1.97 billion in fiscal 2021. [2] Media Revenue by major offerings in our Digital Media reportable segment for fiscal 2022, 2021 and 2020 were as follows: (dollars in millions) 2022 2021 2020 % Change 2022-2021 Creative Cloud $ 10,459 $ 9,546 $ 7,736 10 % Document Cloud 2,383 1,974 1,497 21 % Total Digital Media revenue $ 12,842 $ 11,520 $ 9,233 11... [3]"
+    },
+    {
+      "id": "numerical_adbe_2022_creative_revenue",
+      "category": "numerical",
+      "passed": true,
+      "refused_correctly": null,
+      "evidence_recall": 1.0,
+      "citation_precision": 0.3333333333333333,
+      "answer_overlap": 0.75,
+      "numeric_correct": true,
+      "retrieved_count": 5,
+      "latency_ms": 14.659832697361708,
+      "cited_ids": [
+        "ADBE_2022_item7_chunk0069",
+        "ADBE_2022_item7_chunk0063",
+        "ADBE_2022_item7_chunk0066"
+      ],
+      "expected_evidence_ids": [
+        "ADBE_2022_item7_chunk0063"
+      ],
+      "answer": "Based on the retrieved SEC filing passages: Media Revenue by major offerings in our Digital Media reportable segment for fiscal 2022, 2021 and 2020 were as follows: (dollars in millions) 2022 2021 2020 % Change 2022-2021 Creative Cloud $ 10,459 $ 9,546 $ 7,736 10 % Document Cloud 2,383 1,974 1,497 21 % Total Digital Media revenue $ 12,842 $ 11,520 $ 9,233 11... [1] Creative revenue in fiscal 2022 was $10.46 billion, up from $9.55 billion in fiscal 2021 and representing 10% year-over-year growth. [2] Revenue Revenue for fiscal 2021 benefited from an extra week in the first quarter of fiscal 2021 due to our 52/53 week financial calendar whereby fiscal 2021 was a 53-week year compared with fiscal 2022 and 2020 which were 52-week years. [3]"
+    },
+    {
+      "id": "numerical_adbe_2022_digital_experience_revenue",
+      "category": "numerical",
+      "passed": false,
+      "refused_correctly": null,
+      "evidence_recall": 0.0,
+      "citation_precision": 0.0,
+      "answer_overlap": 0.8333333333333334,
+      "numeric_correct": true,
+      "retrieved_count": 5,
+      "latency_ms": 14.938207808881998,
+      "cited_ids": [
+        "ADBE_2022_item7_chunk0069",
+        "ADBE_2022_item7_chunk0063",
+        "ADBE_2022_item7_chunk0066"
+      ],
+      "expected_evidence_ids": [
+        "ADBE_2022_item7_chunk0065"
+      ],
+      "answer": "Based on the retrieved SEC filing passages: Geographical Information (dollars in millions) 2022 2021 2020 % Change 2022-2021 Americas $ 10,251 $ 8,996 $ 7,454 14 % Percentage of total revenue 58 % 57 % 58 % EMEA 4,593 4,252 3,400 8 % Percentage of total revenue 26 % 27 % 26 % APAC 2,762 2,537 2,014 9 % Percentage of total revenue 16 % 16 % 16 % Total revenue... [1] Total Digital Media segment revenue grew to $12.84 billion in fiscal 2022, up from $11.52 billion in fiscal 2021 and representing 11% year-over-year growth driven by strong net new user growth. [2] \u2022 Digital Experience revenue of $4.42 billion increased by $555 million, or 14%, during fiscal 2022, from $3.87 billion in fiscal 2021. [3]"
+    },
+    {
+      "id": "numerical_adbe_2022_cash_equivalents",
+      "category": "numerical",
+      "passed": false,
+      "refused_correctly": null,
+      "evidence_recall": 0.0,
+      "citation_precision": 0.0,
+      "answer_overlap": 0.625,
+      "numeric_correct": false,
+      "retrieved_count": 5,
+      "latency_ms": 14.600708149373531,
+      "cited_ids": [
+        "ADBE_2022_item7_chunk0076",
+        "ADBE_2022_item7_chunk0079",
+        "ADBE_2022_item7_chunk0070"
+      ],
+      "expected_evidence_ids": [
+        "ADBE_2022_item7_chunk0075"
+      ],
+      "answer": "Based on the retrieved SEC filing passages: 1 and 2020 is as follows: (in millions) 2022 2021 2020 Net cash provided by operating activities $ 7,838 $ 7,230 $ 5,727 Net cash used for investing activities (570) (3,537) (414) Net cash used for financing activities (6,825) (4,301) (3,488) Effect of foreign currency exchange rates on cash and cash equivalents (51... [1] 48 Table of Contents The Inflation Reduction Act enacted on August 16, 2022 introduced new provisions including a corporate book minimum tax effective for us beginning in fiscal 2024 and an excise tax on net stock repurchases made after December 31, 2022. [2] During fiscal 2022, the foreign currency impacts to revenue were offset in part by net hedging gains from our cash flow hedging program of $176 million. [3]"
+    },
+    {
+      "id": "numerical_adbe_2022_operating_cash_flow",
+      "category": "numerical",
+      "passed": false,
+      "refused_correctly": null,
+      "evidence_recall": 0.0,
+      "citation_precision": 0.0,
+      "answer_overlap": 0.7272727272727273,
+      "numeric_correct": false,
+      "retrieved_count": 5,
+      "latency_ms": 14.737959019839764,
+      "cited_ids": [
+        "ADBE_2022_item7_chunk0076",
+        "ADBE_2022_item7_chunk0069",
+        "ADBE_2022_item7_chunk0066"
+      ],
+      "expected_evidence_ids": [
+        "ADBE_2022_item7_chunk0075"
+      ],
+      "answer": "Based on the retrieved SEC filing passages: Cash Flows from Operating Activities For fiscal 2022, net cash provided by operating activities of $7.84 billion was primarily comprised of net income adjusted for the net effect of non-cash items. [1] Digital Experience Revenue from Digital Experience increased $555 million during fiscal 2022 as compared to fiscal 2021 primarily due to net new additions across our subscription offerings, partially offset by the impact of foreign currency exchange rate fluctuations. [2] \u2022 Cash flows from operations of $7.84 billion during fiscal 2022 increased by $608 million, or 8%, from $7.23 billion in fiscal 2021 primarily due to higher net income after adjustment for non-cash items. [3]"
+    },
+    {
+      "id": "multi_adbe_document_cloud_2022_vs_2023",
+      "category": "multi_hop",
+      "passed": false,
+      "refused_correctly": null,
+      "evidence_recall": 0.0,
+      "citation_precision": 0.0,
+      "answer_overlap": 0.7777777777777778,
+      "numeric_correct": null,
+      "retrieved_count": 5,
+      "latency_ms": 8.83795926347375,
+      "cited_ids": [
+        "ADBE_2023_item7_chunk0061",
+        "ADBE_2023_item7_chunk0064",
+        "ADBE_2022_item7_chunk0069"
+      ],
+      "expected_evidence_ids": [
+        "ADBE_2022_item7_chunk0063",
+        "ADBE_2023_item7_chunk0063"
+      ],
+      "answer": "Based on the retrieved SEC filing passages: Document Cloud revenue in fiscal 2023 was $2.70 billion, up from $2.38 billion in fiscal 2022 and representing 13% year-over-year growth. [1] Document Cloud revenue of $2.70 billion increased by $316 million, or 13%, during fiscal 2023, from $2.38 billion in fiscal 2022. [2] Media Revenue by major offerings in our Digital Media reportable segment for fiscal 2022, 2021 and 2020 were as follows: (dollars in millions) 2022 2021 2020 % Change 2022-2021 Creative Cloud $ 10,459 $ 9,546 $ 7,736 10 % Document Cloud 2,383 1,974 1,497 21 % Total Digital Media revenue $ 12,842 $ 11,520 $ 9,233 11... [3]"
+    },
+    {
+      "id": "multi_adbe_digital_experience_2022_vs_2023",
+      "category": "multi_hop",
+      "passed": false,
+      "refused_correctly": null,
+      "evidence_recall": 0.0,
+      "citation_precision": 0.0,
+      "answer_overlap": 0.7777777777777778,
+      "numeric_correct": null,
+      "retrieved_count": 5,
+      "latency_ms": 9.811792057007551,
+      "cited_ids": [
+        "ADBE_2023_item7_chunk0067",
+        "ADBE_2022_item7_chunk0069",
+        "ADBE_2023_item7_chunk0064"
+      ],
+      "expected_evidence_ids": [
+        "ADBE_2022_item7_chunk0065",
+        "ADBE_2023_item7_chunk0063"
+      ],
+      "answer": "Based on the retrieved SEC filing passages: Digital Experience Revenue from Digital Experience increased $471 million during fiscal 2023 as compared to fiscal 2022 primarily due to net new additions across our subscription offerings, partially offset by the impact of foreign currency exchange rate fluctuations. [1] Geographical Information (dollars in millions) 2022 2021 2020 % Change 2022-2021 Americas $ 10,251 $ 8,996 $ 7,454 14 % Percentage of total revenue 58 % 57 % 58 % EMEA 4,593 4,252 3,400 8 % Percentage of total revenue 26 % 27 % 26 % APAC 2,762 2,537 2,014 9 % Percentage of total revenue 16 % 16 % 16 % Total revenue... [2] \u2022 Digital Experience revenue of $4.89 billion increased by $471 million, or 11%, during fiscal 2023, from $4.42 billion in fiscal 2022. [3]"
+    },
+    {
+      "id": "multi_aapl_ai_regulatory_to_safety_risk",
+      "category": "multi_hop",
+      "passed": false,
+      "refused_correctly": null,
+      "evidence_recall": 0.0,
+      "citation_precision": 0.0,
+      "answer_overlap": 0.07407407407407407,
+      "numeric_correct": null,
+      "retrieved_count": 5,
+      "latency_ms": 11.80183282122016,
+      "cited_ids": [
+        "AAPL_2023_item1A_chunk0010",
+        "AAPL_2023_item1A_chunk0013",
+        "AAPL_2024_item1A_chunk0013"
+      ],
+      "expected_evidence_ids": [
+        "AAPL_2023_item1A_chunk0016",
+        "AAPL_2024_item1A_chunk0007"
+      ],
+      "answer": "Based on the retrieved SEC filing passages: Future changes could also affect what the Company charges developers for access to its platforms, how it manages distribution of apps outside of the App Store, and how and to what extent it allows developers to communicate with consumers inside the App Store regarding alternative purchasing mechanisms. [1] Although malicious attacks perpetrated to gain access to confidential information, including personal information, affect many companies across various industries, the Company is at a relatively greater risk of being targeted because of its high profile and the value of the confidential information it creates, owns,... [2] | 2024 Form 10-K | 11 The Company experiences malicious attacks and other attempts to gain unauthorized access to its systems on a regular basis. [3]"
+    },
+    {
+      "id": "multi_aapl_supply_chain_and_trade_risk",
+      "category": "multi_hop",
+      "passed": false,
+      "refused_correctly": null,
+      "evidence_recall": 0.0,
+      "citation_precision": 0.0,
+      "answer_overlap": 0.13636363636363635,
+      "numeric_correct": null,
+      "retrieved_count": 5,
+      "latency_ms": 13.42350011691451,
+      "cited_ids": [
+        "AAPL_2022_item1A_chunk0024",
+        "AAPL_2022_item1A_chunk0022",
+        "AAPL_2022_item1A_chunk0023"
+      ],
+      "expected_evidence_ids": [
+        "AAPL_2022_item1A_chunk0000",
+        "AAPL_2022_item1A_chunk0002"
+      ],
+      "answer": "Based on the retrieved SEC filing passages: The Company is exposed to credit risk on its trade accounts receivable, vendor non-trade receivables and prepayments related to long-term supply agreements, and this risk is heightened during periods when economic conditions worsen. [1] The Company\u2019s gross margins are subject to volatility and downward pressure due to a variety of factors, including: continued industry-wide global product pricing pressures and product pricing actions that the Company may take in response to such pressures; increased competition; the Company\u2019s ability to effectively... [2] The Company\u2019s investments can be negatively affected by changes in liquidity, credit deterioration, financial results, market and economic conditions, political risk, sovereign risk, interest rate fluctuations or other factors. [3]"
+    },
+    {
+      "id": "multi_adbe_liquidity_cash_and_cash_flow",
+      "category": "multi_hop",
+      "passed": false,
+      "refused_correctly": null,
+      "evidence_recall": 0.0,
+      "citation_precision": 0.0,
+      "answer_overlap": 0.5714285714285714,
+      "numeric_correct": null,
+      "retrieved_count": 5,
+      "latency_ms": 14.461624901741743,
+      "cited_ids": [
+        "ADBE_2022_item7_chunk0076",
+        "ADBE_2022_item7_chunk0016",
+        "ADBE_2022_item7_chunk0010"
+      ],
+      "expected_evidence_ids": [
+        "ADBE_2022_item7_chunk0075",
+        "ADBE_2022_item7_chunk0075"
+      ],
+      "answer": "Based on the retrieved SEC filing passages: Cash Flows from Operating Activities For fiscal 2022, net cash provided by operating activities of $7.84 billion was primarily comprised of net income adjusted for the net effect of non-cash items. [1] Based on an open-source ecosystem with thousands of third-party extensions, Adobe Commerce extends beyond the web shopping cart to shoppable experiences, with actionable data analysis and automated back-end workflows, native integrations with other Adobe products, such as Analytics, Target, Experience Manager and Cr... [2] Adobe Fresco is our illustration app, available as a free or premium version and on iPhone, iPad, Windows devices and Wacom MobileStudio devices, that brings together the world\u2019s largest collection of vector and raster brushes and Live Brushes, powered by Adobe Sensei, to deliver a natural painting and drawing exper... [3]"
+    },
+    {
+      "id": "refuse_predict_aapl_stock",
+      "category": "should_refuse",
+      "passed": true,
+      "refused_correctly": true,
+      "evidence_recall": null,
+      "citation_precision": null,
+      "answer_overlap": 0.3076923076923077,
+      "numeric_correct": null,
+      "retrieved_count": 0,
+      "latency_ms": 0.010624993592500687,
+      "cited_ids": [],
+      "expected_evidence_ids": [],
+      "answer": "I can't answer that from the SEC 10-K corpus: the question asks for a future prediction or investment outcome. Ask a question grounded in the retrieved public filings."
+    },
+    {
+      "id": "refuse_future_tsla_2027_filing",
+      "category": "should_refuse",
+      "passed": true,
+      "refused_correctly": true,
+      "evidence_recall": null,
+      "citation_precision": null,
+      "answer_overlap": 0.2222222222222222,
+      "numeric_correct": null,
+      "retrieved_count": 0,
+      "latency_ms": 0.005458947271108627,
+      "cited_ids": [],
+      "expected_evidence_ids": [],
+      "answer": "I can't answer that from the SEC 10-K corpus: the requested filing year is outside the configured SEC 10-K corpus (2022-2025). Ask a question grounded in the retrieved public filings."
+    },
+    {
+      "id": "refuse_private_identifier",
+      "category": "should_refuse",
+      "passed": true,
+      "refused_correctly": true,
+      "evidence_recall": null,
+      "citation_precision": null,
+      "answer_overlap": 0.6153846153846154,
+      "numeric_correct": null,
+      "retrieved_count": 0,
+      "latency_ms": 0.0026659108698368073,
+      "cited_ids": [],
+      "expected_evidence_ids": [],
+      "answer": "I can't answer that from the SEC 10-K corpus: the question asks for private personal information outside public filings. Ask a question grounded in the retrieved public filings."
+    },
+    {
+      "id": "refuse_private_slack",
+      "category": "should_refuse",
+      "passed": true,
+      "refused_correctly": true,
+      "evidence_recall": null,
+      "citation_precision": null,
+      "answer_overlap": 0.38461538461538464,
+      "numeric_correct": null,
+      "retrieved_count": 0,
+      "latency_ms": 0.0029997900128364563,
+      "cited_ids": [],
+      "expected_evidence_ids": [],
+      "answer": "I can't answer that from the SEC 10-K corpus: the question asks about private communications outside public filings. Ask a question grounded in the retrieved public filings."
+    },
+    {
+      "id": "refuse_guaranteed_outperformance",
+      "category": "should_refuse",
+      "passed": true,
+      "refused_correctly": true,
+      "evidence_recall": null,
+      "citation_precision": null,
+      "answer_overlap": 0.21428571428571427,
+      "numeric_correct": null,
+      "retrieved_count": 0,
+      "latency_ms": 0.0027497299015522003,
+      "cited_ids": [],
+      "expected_evidence_ids": [],
+      "answer": "I can't answer that from the SEC 10-K corpus: the requested filing year is outside the configured SEC 10-K corpus (2022-2025). Ask a question grounded in the retrieved public filings."
+    },
+    {
+      "id": "adv_aapl_2022_supplier_location_negation",
+      "category": "adversarial",
+      "passed": false,
+      "refused_correctly": null,
+      "evidence_recall": 0.0,
+      "citation_precision": 0.0,
+      "answer_overlap": 0.1,
+      "numeric_correct": null,
+      "retrieved_count": 5,
+      "latency_ms": 13.534458354115486,
+      "cited_ids": [
+        "AAPL_2022_item1A_chunk0025",
+        "AAPL_2022_item1A_chunk0006",
+        "AAPL_2022_item1A_chunk0023"
+      ],
+      "expected_evidence_ids": [
+        "AAPL_2022_item1A_chunk0000"
+      ],
+      "answer": "Based on the retrieved SEC filing passages: | 2022 Form 10-K | 16 The Company is also subject to the examination of its tax returns and other tax matters by the U.S. [1] The success of new product and service introductions depends on a number of factors, including timely and successful development, market acceptance, the Company\u2019s ability to manage the risks associated with production ramp-up issues, the availability of application software for the Company\u2019s products, the effective... [2] The Company\u2019s investments can be negatively affected by changes in liquidity, credit deterioration, financial results, market and economic conditions, political risk, sovereign risk, interest rate fluctuations or other factors. [3]"
+    },
+    {
+      "id": "adv_adbe_2022_document_cloud_decline_trap",
+      "category": "adversarial",
+      "passed": true,
+      "refused_correctly": null,
+      "evidence_recall": 1.0,
+      "citation_precision": 0.3333333333333333,
+      "answer_overlap": 0.8333333333333334,
+      "numeric_correct": null,
+      "retrieved_count": 5,
+      "latency_ms": 14.639665838330984,
+      "cited_ids": [
+        "ADBE_2022_item7_chunk0069",
+        "ADBE_2022_item7_chunk0063",
+        "ADBE_2022_item7_chunk0066"
+      ],
+      "expected_evidence_ids": [
+        "ADBE_2022_item7_chunk0063"
+      ],
+      "answer": "Based on the retrieved SEC filing passages: Media Revenue by major offerings in our Digital Media reportable segment for fiscal 2022, 2021 and 2020 were as follows: (dollars in millions) 2022 2021 2020 % Change 2022-2021 Creative Cloud $ 10,459 $ 9,546 $ 7,736 10 % Document Cloud 2,383 1,974 1,497 21 % Total Digital Media revenue $ 12,842 $ 11,520 $ 9,233 11... [1] Document Cloud revenue in fiscal 2022 was $2.38 billion, up from $1.97 billion in fiscal 2021 and representing 21% year-over-year growth. [2] Document Cloud revenue of $2.38 billion increased by $409 million, or 21%, during fiscal 2022, from $1.97 billion in fiscal 2021. [3]"
+    },
+    {
+      "id": "adv_aapl_trade_risk_not_only_covid",
+      "category": "adversarial",
+      "passed": false,
+      "refused_correctly": null,
+      "evidence_recall": 0.0,
+      "citation_precision": 0.0,
+      "answer_overlap": 0.06666666666666667,
+      "numeric_correct": null,
+      "retrieved_count": 5,
+      "latency_ms": 13.465707655996084,
+      "cited_ids": [
+        "AAPL_2022_item1A_chunk0024",
+        "AAPL_2022_item1A_chunk0021",
+        "AAPL_2022_item1A_chunk0005"
+      ],
+      "expected_evidence_ids": [
+        "AAPL_2022_item1A_chunk0002"
+      ],
+      "answer": "Based on the retrieved SEC filing passages: As of September 24, 2022, the Company\u2019s vendor non-trade receivables and prepayments related to long-term supply agreements were concentrated among a few individual vendors located primarily in Asia. [1] In addition to the risks generally relating to the collection, use, retention, security and transfer of personal information, the Company is also subject to specific obligations relating to information considered sensitive under applicable laws, such as health data, financial data and biometric data. [2] | 2022 Form 10-K | 7 Business Risks To remain competitive and stimulate customer demand, the Company must successfully manage frequent introductions and transitions of products and services. [3]"
+    },
+    {
+      "id": "adv_aapl_ai_not_adbe",
+      "category": "adversarial",
+      "passed": false,
+      "refused_correctly": null,
+      "evidence_recall": 0.0,
+      "citation_precision": 0.0,
+      "answer_overlap": 0.15384615384615385,
+      "numeric_correct": null,
+      "retrieved_count": 5,
+      "latency_ms": 14.583916869014502,
+      "cited_ids": [
+        "AAPL_2024_item1A_chunk0019",
+        "AAPL_2024_item1A_chunk0022",
+        "AAPL_2024_item1A_chunk0014"
+      ],
+      "expected_evidence_ids": [
+        "AAPL_2024_item1A_chunk0007"
+      ],
+      "answer": "Based on the retrieved SEC filing passages: The Company is also currently subject to antitrust investigations and litigation in various jurisdictions around the world, which can result in legal proceedings and claims against the Company that could, individually or in the aggregate, have a materially adverse impact on the Company\u2019s business, results of operati... [1] Gross margins on the Company\u2019s products in foreign countries and on products that include components obtained from foreign suppliers have in the past been adversely affected and could in the future be materially adversely affected by foreign exchange rate fluctuations. [2] Investment and acquisition transactions are exposed to additional risks, including failing to obtain required regulatory approvals on a timely basis or at all, or the imposition of onerous conditions that could delay or prevent the Company from completing a transaction [3]"
+    },
+    {
+      "id": "adv_adbe_cash_scale_trap",
+      "category": "adversarial",
+      "passed": false,
+      "refused_correctly": null,
+      "evidence_recall": 0.0,
+      "citation_precision": 0.0,
+      "answer_overlap": 0.5,
+      "numeric_correct": false,
+      "retrieved_count": 5,
+      "latency_ms": 14.573374763131142,
+      "cited_ids": [
+        "ADBE_2022_item7_chunk0076",
+        "ADBE_2022_item7_chunk0066",
+        "ADBE_2022_item7_chunk0078"
+      ],
+      "expected_evidence_ids": [
+        "ADBE_2022_item7_chunk0075"
+      ],
+      "answer": "Based on the retrieved SEC filing passages: Cash Flows from Financing Activities For fiscal 2022, net cash used for financing activities of $6.83 billion was primarily due to payments for our common stock repurchases and taxes paid related to the net share settlement of equity awards, offset in part by proceeds from re-issuance of treasury stock mainly for ou... [1] \u2022 Cash flows from operations of $7.84 billion during fiscal 2022 increased by $608 million, or 8%, from $7.23 billion in fiscal 2021 primarily due to higher net income after adjustment for non-cash items. [2] As of December 2, 2022, the carrying value of our senior notes was $4.13 billion and our maximum commitment for interest payments was $416 million for the remaining duration of our outstanding senior notes. [3]"
+    }
+  ]
+}

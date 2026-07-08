@@ -39,6 +39,7 @@ from __future__ import annotations
 
 import html
 import json
+import math
 import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
@@ -349,7 +350,7 @@ def _score_pair(
     gap = end - start
     score = 0.0
 
-    score += (gap**0.5) / 5
+    score += math.sqrt(gap) / 5
 
     window_lower = window_around_start.lower()
     if any(phrase in window_lower for phrase in CROSS_REF_PHRASES):

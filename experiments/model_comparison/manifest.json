@@ -1,0 +1,37 @@
+{
+  "dataset": "data/eval/golden.jsonl",
+  "metrics": [
+    "pass_rate",
+    "refusal_accuracy",
+    "evidence_recall",
+    "citation_precision",
+    "numeric_correctness",
+    "answer_overlap",
+    "p95_latency_ms",
+    "estimated_cost_usd_per_1k_queries"
+  ],
+  "runs": [
+    {
+      "name": "offline_hash_extract",
+      "embedding_provider": "hash",
+      "answer_provider": "extractive",
+      "status": "implemented"
+    },
+    {
+      "name": "openai_gpt4o_mini",
+      "embedding_provider": "openai",
+      "embedding_model": "text-embedding-3-small",
+      "answer_provider": "openai",
+      "answer_model": "gpt-4o-mini",
+      "status": "planned"
+    },
+    {
+      "name": "claude_sonnet",
+      "embedding_provider": "openai",
+      "embedding_model": "text-embedding-3-small",
+      "answer_provider": "anthropic",
+      "answer_model": "claude-sonnet",
+      "status": "planned"
+    }
+  ]
+}

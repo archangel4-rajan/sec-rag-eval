@@ -35,6 +35,12 @@ class Settings(BaseSettings):
     langfuse_secret_key: str = ""
     langfuse_host: str = "http://localhost:3000"
 
+    # Embeddings / retrieval
+    embedding_provider: str = "openai"
+    embedding_model: str = "text-embedding-3-small"
+    embedding_collection: str = "sec_10k_chunks"
+    embedding_batch_size: int = 128
+
     # Paths
     data_dir: Path = Path("./data")
     chroma_path: Path = Path("./data/chroma")

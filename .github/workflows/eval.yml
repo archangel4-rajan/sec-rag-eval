@@ -23,13 +23,14 @@ jobs:
       - name: Install dependencies
         run: uv sync --extra dev
 
-      - name: Lint with ruff
-        run: uv run ruff check src tests
+      - name: Lint
+        run: uv run ruff check .
 
-      - name: Format check with ruff
+      - name: Format
         run: uv run ruff format --check src tests
 
-      - name: Run tests
+      - name: Test
         run: uv run pytest -v
 
-  # Day 9 will add an `eval` job that runs the golden dataset and posts a PR comment.
+      - name: Validate golden dataset
+        run: uv run sec-rag eval validate --dataset data/eval/golden.jsonl
